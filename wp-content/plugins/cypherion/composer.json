@@ -1,0 +1,19 @@
+{
+    "name": "cypherion/cypherion-plugin",
+    "description": "Awesome starter plugin example",
+    "type": "project",
+    "license": "GPL",
+    "authors": [
+        {
+            "name": "Cypherion",
+            "email": "castellani.ale@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+        "phpoffice/phpword": "dev-master"
+    },
+    "autoload": {
+        "psr-4": {"Inc\\": "./inc"}
+    }
+}
