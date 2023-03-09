@@ -110,17 +110,77 @@ function clear_uploads_folder() {
       }
   }
 }
+/**
+ * is_edit_page 
+ * function to check if the current page is a post edit page
+ * 
+ * @author Ohad Raz <admin@bainternet.info>
+ * 
+ * @param  string  $new_edit what page to check for accepts new - new post page ,edit - edit post page, null for either
+ * @return boolean
+ */
+/**
+ * Check if 'edit' or 'new-post' screen of a 
+ * given post type is opened
+ * 
+ * @param null $post_type name of post type to compare
+ *
+ * @return bool true or false
+ */
+function is_edit_or_new_cpt( $post_type = null ) {
+  global $pagenow;
 
+  /**
+   * return false if not on admin page or
+   * post type to compare is null
+   */
+  if ( ! is_admin() || $post_type === null ) {
+      return FALSE;
+  }
+
+  /**
+   * if edit screen of a post type is active
+   */
+  if ( $pagenow === 'post.php' ) {
+      // get post id, in case of view all cpt post id will be -1
+      $post_id = isset( $_GET[ 'post' ] ) ? $_GET[ 'post' ] : - 1;
+
+      // if no post id then return false
+      if ( $post_id === - 1 ) {
+          return FALSE;
+      }
+
+      // get post type from post id
+      $get_post_type = get_post_type( $post_id );
+
+      // if post type is compared return true else false
+      if ( $post_type === $get_post_type ) {
+          return TRUE;
+      } else {
+          return FALSE;
+      }
+  } elseif ( $pagenow === 'post-new.php' ) { // is new-post screen of a post type is active
+      // get post type from $_GET array
+      $get_post_type = isset( $_GET[ 'post_type' ] ) ? $_GET[ 'post_type' ] : '';
+      // if post type matches return true else false.
+      if ( $post_type === $get_post_type ) {
+          return TRUE;
+      } else {
+          return FALSE;
+      }
+  } else {
+      // return false if on any other page.
+      return FALSE;
+  }
+}
 
 function create_customer_word_docs() {
-  clear_uploads_folder();
-  
   // Iterate over all Customers custom post types
   $customers = get_posts(array(
     'post_type' => 'Customers',
     'numberposts' => -1
   ));
-
+//wp-content\uploads\rhomboid_goatcabin.docx
   $wordDocs = array();
   foreach($customers as $customer) {
 
@@ -139,25 +199,36 @@ function create_customer_word_docs() {
 
     $html_filename = $first_name . '_' . $last_name . '.docx';
     
-    if (current_user_can('edit_posts')) {
-      // $url = set_url_scheme(site_url('/wp-content/uploads/' . $html_filename), 'https');
+// Search for .docx files in the folder
+    // if ($_GET['post_type']) {
+    
+    //   // $url = set_url_scheme(site_url('/wp-content/uploads/' . $html_filename), 'https');
 
-      global $post;
+    // }
+    // else {
+      if (is_admin()) {
 
-      // Get the ID of the attached Word documenet
-      $attachment_id = get_post_meta( $post->ID, make_key($html_filename), true );
+        global $post;
+
+        // Get the ID of the attached Word documenet
+        $attachment_id = get_post_meta( $post->ID, make_key($html_filename), true );
+    
+        // Construct the URL for the attached Word document
+        $url = set_url_scheme(wp_get_attachment_url( $attachment_id ), 'https');
+      }
+      else {
+        //$url = set_url_scheme(site_url('/wp-content/uploads/' . $html_filename), 'https');
+        $url = './wp-content/uploads/' . $html_filename;
+
+        $writer = IOFactory::createWriter($phpWord, 'Word2007');
+        $writer->save($url);
+        //$writer->save('./' . $html_filename);
+      }
+
+    // }
+
+    // clear_uploads_folder();
   
-      // Construct the URL for the attached Word document
-      $url = set_url_scheme(wp_get_attachment_url( $attachment_id ), 'https');
-    }
-    else {
-      $url = './wp-content/uploads/' . $html_filename;
-
-      $writer = IOFactory::createWriter($phpWord, 'Word2007');
-      $writer->save($url);
-      //$writer->save('./' . $html_filename);
-    }
-
 
     // Check for errors
     $error = error_get_last();
